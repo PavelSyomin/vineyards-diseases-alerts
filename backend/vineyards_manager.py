@@ -1,10 +1,10 @@
 import json
 import pathlib
-from pydantic import BaseModel
 from typing import List, Union
 
 import numpy as np
 import pandas as pd
+from pydantic import BaseModel
 
 
 # Class for Vineyards POST input

@@ -1,9 +1,12 @@
-from typing import List, Optional, Union
+import json
+from typing import List, Optional, Tuple, Union
 
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import geopandas as gpd
 import openmeteo_requests
+from pydantic import BaseModel
 import requests_cache
 from retry_requests import retry
 
@@ -38,6 +41,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+class Contour(BaseModel):
+    id: int
+    geometry: List[List[Tuple[float, float]]]
 
 
 @app.get("/health")
@@ -107,3 +115,21 @@ def get_vineyard_alerts_by_id(vid: int, date: str = None):
     return resp
 
 
+@app.get("/map", response_model=List[Contour])
+def get_map():
+    """
+    Get grid map of alert statuses for the whole region
+    """
+    grid = gpd.read_file("grid.geojson")
+    centroids = gpd.read_file("grid_centroids.geojson")
+
+    contours = json.loads(grid[["id", "geometry"]].to_json()).get("features", [])
+    contours = [
+        {
+            "id": contour["id"],
+            "geometry": contour["geometry"]["coordinates"],
+        }
+        for contour in contours
+    ]
+
+    return contours
