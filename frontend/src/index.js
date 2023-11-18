@@ -9,7 +9,6 @@ import {
   SearchControl,
   Placemark,
 } from "react-yandex-maps";
-import { tmp_d, geo_data } from "./geojson.js";
 import DataPopup from "./dataPopup";
 import "./styles.css";
 
@@ -22,33 +21,6 @@ const mapState = {
   zoom: 10,
   controls: [],
 };
-
-
-const POLYGON_COORDS = [
-  [
-    [39.715005106118852, 46.860407184352518],
-    [39.717628767989581, 46.860390765865986],
-    [39.717580812963924, 46.856791453700929],
-    [39.718892555390489, 46.856783222938837],
-    [39.718880546168208, 46.855883394793736],
-    [39.72281570425104, 46.855858613100807],
-    [39.722791556100489, 46.854058957926753],
-    [39.713609819181343, 46.854116567857297],
-    [39.713621739622788, 46.855016397317797],
-    [39.709686635169312, 46.855040862619525],
-    [39.709722202759821, 46.857740352429239],
-    [39.711033970541763, 46.857732211594545],
-    [39.711057728944233, 46.85953187023653],
-    [39.714993160322024, 46.859507356014646],
-    [39.715005106118852, 46.860407184352518],
-  ],
-];
-
-//const POLYGON_RECT = [[55.75, 37.8], [55.8, 37.8], [55.8, 38], [55.75, 38]];
-const POLYGON_RECT = [
-  [55.72, 37.5],
-  [55.78, 37.75],
-];
 
 class App extends React.Component {
   constructor(props) {
@@ -65,11 +37,11 @@ class App extends React.Component {
       filtersDesc: [],
       filtersData: [],
       filterStr: "",
-      selectedDate: '2021-07-31',
+      selectedDate: "2021-07-31",
       popupIsOpen: false,
       loading: false,
-	  placeData: {},
-    showPolygons: false,
+      placeData: {},
+      showPolygons: false,
     };
   }
 
@@ -104,7 +76,6 @@ class App extends React.Component {
 
     axios.get(server_ip + "map").then((resp) => {
       self.setState({ geodata: [...resp.data] });
-      
     });
   };
 
@@ -133,33 +104,13 @@ class App extends React.Component {
     let self = this;
 
     axios.post(server_ip + "vineyards", { name, lat, lon }).then((resp) => {
-      //alert(resp.data);
-      console.log(resp);
       self.getVineData();
-      //self.setVineData(resp.data);
     });
   };
 
   getPolygonInfo = (item) => {
     var self = this;
     alert(item.id);
-    //this.setState({ circles: [], yard_id: -1, loading: true, filterStr: "" });
-
-  /*
-    axios.defaults.headers.get["Content-Type"] =
-      "application/json;charset=utf-8";
-    axios.defaults.headers.get["Access-Control-Allow-Origin"] = "*";
-
-    axios.get(server_ip + "suggest/" + id).then(
-      (resp) => {
-
-        self.setSuggest(resp.data, id);
-      },
-      (err) => {
-        self.setState({ circles: [], loading: false });
-      }
-    );
-    */
   };
 
   getPlaceInfo = (item) => {
@@ -169,22 +120,37 @@ class App extends React.Component {
       "application/json;charset=utf-8";
     axios.defaults.headers.get["Access-Control-Allow-Origin"] = "*";
 
-    axios.get(server_ip + "vineyards/" + item.id + "/alerts?date="+this.state.selectedDate).then(
-      (resp) => {
-        console.log(resp.data);
-		if (resp.data)
-		{
-			self.setState({placeData:{...resp.data,name:item.name,lat:item.lat,lon:item.lon,id:item.id}})
-		}
-      },
-      (err) => {}
-    );
+    axios
+      .get(
+        server_ip +
+          "vineyards/" +
+          item.id +
+          "/alerts?date=" +
+          this.state.selectedDate
+      )
+      .then(
+        (resp) => {
+          console.log(resp.data);
+          if (resp.data) {
+            self.setState({
+              placeData: {
+                ...resp.data,
+                name: item.name,
+                lat: item.lat,
+                lon: item.lon,
+                id: item.id,
+              },
+            });
+          }
+        },
+        (err) => {}
+      );
   };
 
   delPlace = (id) => {
-	alert(id);
-	this.setState({popupIsOpen:false,placeData:{}})
-  }
+    alert(id);
+    this.setState({ popupIsOpen: false, placeData: {} });
+  };
 
   setSuggest = (data, id) => {
     this.setState({
@@ -199,7 +165,6 @@ class App extends React.Component {
     this.setState({ filtersShow: false });
 
     if (val) {
-      //alert(JSON.stringify(val));
       this.setState({ filtersData: val });
       this.setFilters(val);
     }
@@ -244,28 +209,17 @@ class App extends React.Component {
   };
 
   togglePolygons = () => {
-
     const { showPolygons } = this.state;
     this.setState({ showPolygons: !showPolygons });
   };
 
-
   selectMarker = (item, index) => {
-    let { circles } = this.state;
-
-    //circles = circles.filter((val, i) => i != index);
-
-    this.setState({ circles, popupIsOpen: true, popupId: item.id });
+    this.setState({ popupIsOpen: true, popupId: item.id });
     this.getPlaceInfo(item);
   };
 
   addMarker = (event) => {
     const coordinates = event.get("coords");
-
-    console.log(coordinates);
-    //const { circles } = this.state;
-    //circles.push(coordinates);
-    //this.setState({ circles });
 
     var name = prompt("Введите название виноградника", "Виноградник");
 
@@ -289,7 +243,7 @@ class App extends React.Component {
       selectedDate,
       popupIsOpen,
       showPolygons,
-	  placeData,
+      placeData,
     } = this.state;
 
     let self = this;
@@ -327,7 +281,8 @@ class App extends React.Component {
               />
             ))}
 
-            {showPolygons && geodata.length > 0 &&
+            {showPolygons &&
+              geodata.length > 0 &&
               geodata.map((item, index) => (
                 <Polygon
                   key={index}
@@ -345,7 +300,9 @@ class App extends React.Component {
 
             <Button
               options={{ maxWidth: 150 }}
-              data={{ content: showPolygons?"Cкрыть полигоны":"Показать полигоны" }}
+              data={{
+                content: showPolygons ? "Cкрыть полигоны" : "Показать полигоны",
+              }}
               onClick={this.togglePolygons}
             />
             <ZoomControl />
@@ -375,7 +332,11 @@ class App extends React.Component {
           </div>
         )}
         {popupIsOpen && (
-          <DataPopup onClose={() => this.setState({ popupIsOpen: false,placeData: {} })} data={placeData} delPlace={this.delPlace} />
+          <DataPopup
+            onClose={() => this.setState({ popupIsOpen: false, placeData: {} })}
+            data={placeData}
+            delPlace={this.delPlace}
+          />
         )}
       </div>
     );
