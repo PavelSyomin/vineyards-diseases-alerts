@@ -1,4 +1,5 @@
 from collections import namedtuple
+import datetime
 from itertools import groupby
 import datetime
 import logging
@@ -23,9 +24,10 @@ class Alerts(BaseModel):
 
 
 class Weather(BaseModel):
-    dt: int
+    dt: datetime.datetime
     t: float
     h: float
+
 
 class AlertData(BaseModel):
     alerts: List[Alerts]
@@ -62,7 +64,7 @@ class Alertmaker:
 
         return {
             "alerts": alerts,
-            "weather": data.to_json(orient="records"),
+            "weather": data.to_dict(orient="records"),
         }
 
     def _get_weather(self, point: Point, date: Optional[str] = None, back: int = 2, forward: int = 7):
