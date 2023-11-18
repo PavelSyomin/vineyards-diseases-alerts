@@ -69,3 +69,13 @@ class VineyardsManager:
         self._vineyards.to_csv(self._storage_path, index=False)
 
         return new_vineyard.to_dict(orient="records")[0]
+
+    def delete(self, vineyard_id: int) -> bool:
+        new_vineyards = self._vineyards.loc[self._vineyards["id"] != vineyard_id]
+        if len(new_vineyards) == len(self._vineyards):
+            return False # not found
+
+        self._vineyards = new_vineyards
+        self._vineyards.to_csv(self._storage_path, index=False)
+
+        return True

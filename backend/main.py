@@ -16,11 +16,11 @@ cache_session = requests_cache.CachedSession('.app_cache', expire_after = -1)
 retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
 openmeteo = openmeteo_requests.Client(session=retry_session)
 
-# Instantiate Alertmaker
+# Instantiate Alertmaker and VineyardsManager
 am = Alertmaker(client=openmeteo)
 v = VineyardsManager(storage_path="vineyards.csv")
 
-
+# Create app
 app = FastAPI()
 
 # CORS setup
@@ -30,7 +30,6 @@ origins = [
     "http://localhost:8080",
     "*",
 ]
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -81,6 +80,15 @@ def get_vineyard_by_id(vid: int):
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content=None)
 
     return vineyard
+
+
+@app.delete("/vineyards/{vid}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_vineyard_by_id(vid: int):
+    result = v.delete(vid)
+    if not result:
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content=None)
+
+    return {"status": "deleted"}
 
 
 @app.get("/vineyards/{vid}/alerts", response_model=AlertData)
