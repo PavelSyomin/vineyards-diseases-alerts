@@ -1,4 +1,5 @@
 from collections import namedtuple
+from itertools import groupby
 import datetime
 import logging
 from typing import Dict, List, Optional
@@ -6,12 +7,29 @@ from typing import Dict, List, Optional
 import openmeteo_requests
 from openmeteo_sdk.WeatherApiResponse import WeatherApiResponse
 import pandas as pd
+from pydantic import BaseModel
 import requests_cache
 from retry_requests import retry
 
 
 Interval = namedtuple("Interval", ["start", "end"])
 Point = namedtuple("Point", ["lat", "lon"])
+
+
+class Alerts(BaseModel):
+    name: str
+    type: str
+    dt: List[str]
+
+
+class Weather(BaseModel):
+    dt: int
+    t: float
+    h: float
+
+class AlertData(BaseModel):
+    alerts: List[Alerts]
+    weather: List[Weather]
 
 
 class Alertmaker:
@@ -44,7 +62,7 @@ class Alertmaker:
 
         return {
             "alerts": alerts,
-            "weather": data.to_json(),
+            "weather": data.to_json(orient="records"),
         }
 
     def _get_weather(self, point: Point, date: Optional[str] = None, back: int = 2, forward: int = 7):
@@ -111,6 +129,7 @@ class Alertmaker:
         alerts = []
 
         for disease in self._diseases.itertuples(index=False):
+            print(f"Checking {disease.name}")
             optimal = []
             potential = []
             for day in data.itertuples(index=False):
