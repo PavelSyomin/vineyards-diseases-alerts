@@ -13,6 +13,8 @@ import requests_cache
 from retry_requests import retry
 
 
+logging.basicConfig(filename="log.txt", encoding="utf-8", level=logging.DEBUG)
+
 Interval = namedtuple("Interval", ["start", "end"])
 Point = namedtuple("Point", ["lat", "lon"])
 
@@ -131,7 +133,7 @@ class Alertmaker:
         alerts = []
 
         for disease in self._diseases.itertuples(index=False):
-            print(f"Checking {disease.name}")
+            self._logger.info(f"Checking {disease.name}")
             optimal = []
             potential = []
             for day in data.itertuples(index=False):
@@ -165,14 +167,14 @@ class Alertmaker:
                 alerts.append({
                     "name": disease.name,
                     "type": "red",
-                    "dt": data["dt"][optimal_mask].astype(str).values
+                    "dt": list(data["dt"][optimal_mask].astype(str).values)
                 })
 
             if len(data["dt"][potential_mask]) > 0:
                 alerts.append({
                     "name": disease.name,
                     "type": "yellow",
-                    "dt": data["dt"][potential_mask].astype(str).values
+                    "dt": list(data["dt"][potential_mask].astype(str).values)
                 })
 
         return alerts
