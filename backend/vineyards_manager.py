@@ -1,7 +1,7 @@
 import json
 import pathlib
 from pydantic import BaseModel
-from typing import List
+from typing import List, Union
 
 import numpy as np
 import pandas as pd
@@ -10,7 +10,7 @@ import pandas as pd
 # Class for Vineyards POST input
 class Vineyard(BaseModel):
     name: str
-    desc: str | None = None
+    desc: Union[str, None] = None
     lat: float
     lon: float
 

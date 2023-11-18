@@ -13,7 +13,7 @@ import requests_cache
 from retry_requests import retry
 
 
-logging.basicConfig(filename="log.txt", encoding="utf-8", level=logging.DEBUG)
+logging.basicConfig(filename="log.txt", level=logging.DEBUG)
 
 Interval = namedtuple("Interval", ["start", "end"])
 Point = namedtuple("Point", ["lat", "lon"])
