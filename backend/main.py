@@ -1,6 +1,7 @@
 from typing import List, Optional, Union
 
 from fastapi import FastAPI, status
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import openmeteo_requests
 import requests_cache
