@@ -59,12 +59,26 @@ def health():
 
 
 @app.get("/vineyards", response_model=List[VineyardResponse])
-def get_vineyards():
+def get_vineyards(
+    with_alerts: bool = False,
+    date: str = None,
+    back: int = 2,
+    forward: int = 7,
+    threshold: int = 3
+):
     """
     Get list of all vineyards
     """
+    if not with_alerts:
+        return v.items()
+    else:
+        vineyards = v.items()
+        for index, vineyard in enumerate(vineyards):
+            point = Point(vineyard["lat"], vineyard["lon"])
+            alerts_data = am.alerts(point, date, back, forward, threshold)
+            vineyards[index]["alerts_data"] = alerts_data
 
-    return v.items()
+        return vineyards
 
 
 @app.post("/vineyards", status_code=status.HTTP_201_CREATED, response_model=VineyardResponse)

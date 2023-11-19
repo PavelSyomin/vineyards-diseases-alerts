@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel
 
+from alertmaker import AlertData
+
 
 # Class for Vineyards POST input
 class Vineyard(BaseModel):
@@ -17,6 +19,7 @@ class Vineyard(BaseModel):
 
 class VineyardResponse(Vineyard):
     id: int
+    alerts_data: AlertData = None
 
 
 class VineyardsManager:

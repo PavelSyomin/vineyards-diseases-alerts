@@ -19,10 +19,16 @@ Interval = namedtuple("Interval", ["start", "end"])
 Point = namedtuple("Point", ["lat", "lon"])
 
 
-class Alerts(BaseModel):
+class Disease(BaseModel):
     name: str
     type: str
     dt: List[str]
+
+
+class Alerts(BaseModel):
+    color: str
+    count: int
+    diseases: List[Disease]
 
 
 class Weather(BaseModel):
@@ -32,7 +38,7 @@ class Weather(BaseModel):
 
 
 class AlertData(BaseModel):
-    alerts: List[Alerts]
+    alerts: Alerts
     weather: List[Weather]
 
 
@@ -133,6 +139,7 @@ class Alertmaker:
 
     def _get_alerts(self, data: pd.DataFrame, threshold: int = 3):
         alerts = []
+        color = "green"
 
         for disease in self._diseases.itertuples(index=False):
             self._logger.info(f"Checking {disease.name}")
@@ -171,6 +178,7 @@ class Alertmaker:
                     "type": "red",
                     "dt": list(data["dt"][optimal_mask].astype(str).values)
                 })
+                color = "red"
 
             if len(data["dt"][potential_mask]) > 0:
                 alerts.append({
@@ -178,8 +186,13 @@ class Alertmaker:
                     "type": "yellow",
                     "dt": list(data["dt"][potential_mask].astype(str).values)
                 })
+                color = "yellow"
 
-        return alerts
+        return {
+            "color": color,
+            "count": len(alerts),
+            "diseases": alerts,
+        }
 
     def _make_dataframe_from_response(self, response: WeatherApiResponse):
         hourly_data = response.Hourly()
