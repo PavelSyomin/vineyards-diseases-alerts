@@ -45,6 +45,7 @@ app.add_middleware(
 
 class Contour(BaseModel):
     id: int
+    alerts: AlertData
     geometry: List[List[Tuple[float, float]]]
 
 
@@ -100,9 +101,22 @@ def delete_vineyard_by_id(vid: int):
 
 
 @app.get("/vineyards/{vid}/alerts", response_model=AlertData)
-def get_vineyard_alerts_by_id(vid: int, date: str = None):
+def get_vineyard_alerts_by_id(
+    vid: int,
+    date: str = None,
+    back: int = 2,
+    forward: int = 7,
+    threshold: int = 3
+):
     """
     Get alerts and weather for vineyard
+
+    Params:
+    - **vid**: vineyard id
+    - **date**: <current> day as ISO string, e.g. 2023-01-01
+    - **back**: number of days to look at the past (e.g. watch for the days before today to see hazards which may have started recently)
+    - **forward**: number of forecast days
+    - **threshold**: number of days with suitable weather to make an alert
     """
 
     vineyard = get_vineyard_by_id(vid)
@@ -110,23 +124,49 @@ def get_vineyard_alerts_by_id(vid: int, date: str = None):
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content=None)
 
     point = Point(vineyard["lat"], vineyard["lon"])
-    resp = am.alerts(point, date)
+    resp = am.alerts(point, date, back, forward, threshold)
 
     return resp
 
 
 @app.get("/map", response_model=List[Contour])
-def get_map():
+def get_map(date: str = None, back: int = 2, forward: int = 7, threshold: int = 3):
     """
     Get grid map of alert statuses for the whole region
-    """
-    grid = gpd.read_file("grid.geojson")
-    centroids = gpd.read_file("grid_centroids.geojson")
 
-    contours = json.loads(grid[["id", "geometry"]].to_json()).get("features", [])
+    Params are the same as for alerts
+    """
+    grid = gpd.read_file("grid_50.geojson")
+    centroids = gpd.read_file("grid_50_centroids.geojson")
+    contours = (
+        grid[["id", "geometry"]]
+        .merge(
+            centroids[["id", "geometry"]],
+            on="id",
+            suffixes=("", "_centroid")
+        )
+    )
+
+    alerts_data = []
+    cnt = 0
+    limit = 5
+    for contour in contours.itertuples(index=False):
+        point = Point(
+            lat=contour.geometry_centroid.y, lon=contour.geometry_centroid.x)
+        if cnt < limit:
+            alerts = am.alerts(point)
+        else:
+            alerts = {"alerts": [], "weather": []}
+        alerts_data.append(json.dumps(alerts))
+        cnt += 1
+    contours["alerts"] = alerts_data
+
+    contours = json.loads(contours[["id", "alerts", "geometry"]].to_json()).get("features", [])
+
     contours = [
         {
             "id": contour["id"],
+            "alerts": json.loads(contour["properties"]["alerts"]),
             "geometry": contour["geometry"]["coordinates"],
         }
         for contour in contours

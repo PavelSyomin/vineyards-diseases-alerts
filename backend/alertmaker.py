@@ -26,7 +26,7 @@ class Alerts(BaseModel):
 
 
 class Weather(BaseModel):
-    dt: datetime.datetime
+    dt: str
     t: float
     h: float
 
@@ -63,6 +63,8 @@ class Alertmaker:
     ) -> Dict[dict, dict]:
         data = self._get_weather(point, date, back, forward)
         alerts = self._get_alerts(data, threshold)
+
+        data["dt"] = data["dt"].astype(str)
 
         return {
             "alerts": alerts,
