@@ -45,7 +45,7 @@ app.add_middleware(
 
 class Contour(BaseModel):
     id: int
-    alerts: AlertData
+    alerts: AlertData = None
     geometry: List[List[Tuple[float, float]]]
 
 
@@ -163,14 +163,14 @@ def get_map(date: str = None, back: int = 2, forward: int = 7, threshold: int = 
 
     alerts_data = []
     cnt = 0
-    limit = 5
+    limit = 100
     for contour in contours.itertuples(index=False):
         point = Point(
             lat=contour.geometry_centroid.y, lon=contour.geometry_centroid.x)
         if cnt < limit:
             alerts = am.alerts(point)
         else:
-            alerts = {"alerts": [], "weather": []}
+            alerts = None
         alerts_data.append(json.dumps(alerts))
         cnt += 1
     contours["alerts"] = alerts_data
