@@ -236,6 +236,16 @@ class App extends React.Component {
     let self = this;
     console.log(circles); 
 
+    /*
+       <Button
+              options={{ maxWidth: 150 }}
+              data={{
+                content: showPolygons ? "Cкрыть полигоны" : "Показать полигоны",
+              }}
+              onClick={this.togglePolygons}
+            />
+            */
+
     return (
       <div className="App">
         <YMaps
@@ -287,13 +297,7 @@ class App extends React.Component {
               />
             ))}
 
-            <Button
-              options={{ maxWidth: 150 }}
-              data={{
-                content: showPolygons ? "Cкрыть полигоны" : "Показать полигоны",
-              }}
-              onClick={this.togglePolygons}
-            />
+         
             <Button
               options={{ maxWidth: 150 }}
               data={{
