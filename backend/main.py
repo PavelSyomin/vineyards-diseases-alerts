@@ -168,7 +168,7 @@ def get_map(date: str = None, back: int = 2, forward: int = 7, threshold: int = 
         point = Point(
             lat=contour.geometry_centroid.y, lon=contour.geometry_centroid.x)
         if cnt < limit:
-            alerts = am.alerts(point)
+            alerts = am.alerts(point, date, back, forward, threshold)
         else:
             alerts = None
         alerts_data.append(json.dumps(alerts))
