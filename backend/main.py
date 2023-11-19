@@ -163,7 +163,7 @@ def get_map(date: str = None, back: int = 2, forward: int = 7, threshold: int = 
 
     alerts_data = []
     cnt = 0
-    limit = 5
+    limit = 100
     for contour in contours.itertuples(index=False):
         point = Point(
             lat=contour.geometry_centroid.y, lon=contour.geometry_centroid.x)
