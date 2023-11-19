@@ -43,6 +43,11 @@ class AlertData(BaseModel):
 
 
 class Alertmaker:
+    COLORS = {
+        "green": "#22AA22",
+        "red": "#AA2222",
+        "yellow": "#AAAA22",
+    }
     FORECAST_ENDPOINT = "https://api.open-meteo.com/v1/forecast"
     HISTORY_ENDPOINT = "https://archive-api.open-meteo.com/v1/archive"
     HISTORY_DELAY = 2
@@ -139,7 +144,7 @@ class Alertmaker:
 
     def _get_alerts(self, data: pd.DataFrame, threshold: int = 3):
         alerts = []
-        color = "green"
+        color = self.COLORS["green"]
 
         for disease in self._diseases.itertuples(index=False):
             self._logger.info(f"Checking {disease.name}")
@@ -175,18 +180,18 @@ class Alertmaker:
             if len(data["dt"][optimal_mask]) > 0:
                 alerts.append({
                     "name": disease.name,
-                    "type": "red",
+                    "type": self.COLORS["red"],
                     "dt": list(data["dt"][optimal_mask].astype(str).values)
                 })
-                color = "red"
+                color = self.COLORS["red"]
 
             if len(data["dt"][potential_mask]) > 0:
                 alerts.append({
                     "name": disease.name,
-                    "type": "yellow",
+                    "type": self.COLORS["yellow"],
                     "dt": list(data["dt"][potential_mask].astype(str).values)
                 })
-                color = "yellow"
+                color = self.COLORS["yellow"]
 
         return {
             "color": color,
