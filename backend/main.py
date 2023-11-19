@@ -45,7 +45,7 @@ app.add_middleware(
 
 class Contour(BaseModel):
     id: int
-    alerts: AlertData = None
+    alerts_data: AlertData = None
     geometry: List[List[Tuple[float, float]]]
 
 
@@ -180,7 +180,7 @@ def get_map(date: str = None, back: int = 2, forward: int = 7, threshold: int = 
     contours = [
         {
             "id": contour["id"],
-            "alerts": json.loads(contour["properties"]["alerts"]),
+            "alerts_data": json.loads(contour["properties"]["alerts"]),
             "geometry": contour["geometry"]["coordinates"],
         }
         for contour in contours
