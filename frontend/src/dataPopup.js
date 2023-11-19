@@ -1,11 +1,11 @@
-import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
-import * as React from 'react';
+import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
+import * as React from "react";
 import { Line } from "react-chartjs-2";
-import Chart from 'chart.js/auto';
+import Chart from "chart.js/auto";
 
 const minDistance = 0;
 
@@ -20,81 +20,143 @@ const MenuProps = {
   },
 };
 
+const getDM = (cur_date, skipYear = true) => {
+  cur_date = cur_date.split("T")[0];
+  cur_date = cur_date.split("-").reverse();
+  if (skipYear) {
+    cur_date.pop();
+  }
+  return cur_date.join("-");
+};
 
+const ChartData = ({ labels, title, color, values }) => {
+  console.log(labels);
 
-const ChartData = () => {
   const lineChartData = {
-    labels: ["October", "November", "December"],
+    labels: [...labels],
     datasets: [
       {
-        data: [8137119, 9431691, 10266674],
-        label: "Infected",
-        borderColor: "#3333ff",
+        data: values,
+        label: title,
+        borderColor: color,
         fill: true,
-        lineTension: 0.5
+        lineTension: 0.5,
       },
-      {
-        data: [1216410, 1371390, 1477380],
-        label: "Deaths",
-        borderColor: "#ff3333",
-        backgroundColor: "rgba(255, 0, 0, 0.5)",
-        fill: true,
-        lineTension: 0.5
-      }
-    ]
+    ],
   };
 
   return (
     <Line
       type="line"
       width={160}
-      height={60}
+      height={40}
       options={{
-        title: {
-          display: true,
-          text: "COVID-19 Cases of Last 6 Months",
-          fontSize: 20
-        },
         legend: {
           display: true, //Is the legend shown?
-          position: "top" //Position of the legend.
-        }
+          position: "top", //Position of the legend.
+        },
       }}
       data={lineChartData}
     />
   );
 };
 
-export default function DataPopup({onClose, delPlace, data}) {
-  
-  const [scroll, setScroll] = React.useState('paper');
-  
+export default function DataPopup({ onClose, delPlace, data }) {
+  const [scroll, setScroll] = React.useState("paper");
+  const [temper, setTemper] = React.useState([]);
+  const [humid, setHumid] = React.useState([]);
+  const [labels, setLabels] = React.useState([]);
+
+  React.useEffect(() => {
+    console.log(data);
+
+    if (!data.weather) return;
+
+    let dt = [];
+    let t_data = [];
+    let h_data = [];
+    const { weather } = data;
+
+    for (let i = 0; i < weather.length; i++) {
+      let cur_date = weather[i].dt;
+      dt.push(getDM(cur_date));
+      t_data[i] = weather[i].t;
+      h_data[i] = weather[i].h;
+    }
+
+    setLabels(dt);
+    setTemper(t_data);
+    setHumid(h_data);
+  }, [data]);
 
   const handleClose = (val) => {
     onClose(null);
   };
-  
-  
+
+  console.log(data.alerts);
+
   return (
-      <Dialog
-        open={true}
-        onClose={handleClose}
-        scroll={scroll}
-        aria-labelledby="scroll-dialog-title"
-        aria-describedby="scroll-dialog-description"
-		 fullWidth={true}
-        maxWidth={"lg"}
-      >
-        <DialogTitle id="scroll-dialog-title">Данные по болезням</DialogTitle>
-        <DialogContent dividers={scroll === 'paper'}>
-          <div>{JSON.stringify(data)}</div>
-          <ChartData />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={()=>delPlace(data.id)}>Удалить место</Button>
-          <Button onClick={()=>handleClose()}>Закрыть</Button>
-        </DialogActions>
-      </Dialog>
- 
+    <Dialog
+      open={true}
+      onClose={handleClose}
+      scroll={scroll}
+      aria-labelledby="scroll-dialog-title"
+      aria-describedby="scroll-dialog-description"
+      fullWidth={true}
+      maxWidth={"lg"}
+    >
+      <DialogTitle id="scroll-dialog-title">Данные по болезням</DialogTitle>
+      <DialogContent dividers={scroll === "paper"}>
+        <div>
+          {data.alerts &&
+            data.alerts.length > 0 &&
+            data.alerts.map(function (item) {
+              return (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    marginBottom: 10,
+                    fontSize: 18,
+                  }}
+                >
+                  <div style={{ backgroundColor: item.type }}>
+                    {item.name + ": " ?? ""}
+                  </div>
+
+                  {item.dt &&
+                    item.dt.map((dItem, dIndex) => (
+                      <div style={{ marginLeft: 5 }}>
+                        {(dIndex > 0 ? ", " : "") + getDM(dItem, false)}
+                      </div>
+                    ))}
+                </div>
+              );
+            })}
+            {!data.alerts || data.alerts.length==0 && <div style={{fontSize:20}}>Нет болезней</div>}
+        </div>
+
+        {labels.length > 0 && (
+          <ChartData
+            labels={labels}
+            color="#ff3333"
+            title="Температура"
+            values={temper}
+          />
+        )}
+        {labels.length > 0 && (
+          <ChartData
+            labels={labels}
+            color="#3333ff"
+            title="Влажность"
+            values={humid}
+          />
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() =>{ delPlace(data.id);}}>Удалить место</Button>
+        <Button onClick={() => handleClose()}>Закрыть</Button>
+      </DialogActions>
+    </Dialog>
   );
 }

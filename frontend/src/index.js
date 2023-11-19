@@ -1,15 +1,15 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import {
-  YMaps,
-  Map,
   Button,
-  Polygon,
-  ZoomControl,
-  SearchControl,
+  Map,
   Placemark,
+  Polygon,
+  YMaps,
+  ZoomControl
 } from "react-yandex-maps";
 import DataPopup from "./dataPopup";
+import SettingsDialog from "./settingsDialog";
 import "./styles.css";
 
 const axios = require("axios");
@@ -34,11 +34,13 @@ class App extends React.Component {
       pg: [],
       p_index: 0,
       yard_id: -1,
-      filtersDesc: [],
-      filtersData: [],
-      filterStr: "",
+      settignsData: {
+        before: { value: 2, title: "Сколько дней в прошлое" },
+        after: { value: 2, title: "Сколько дней в будущее" },
+      },
       selectedDate: "2021-07-31",
       popupIsOpen: false,
+      settingsIsOpen: false,
       loading: false,
       placeData: {},
       showPolygons: false,
@@ -49,7 +51,7 @@ class App extends React.Component {
     document.title = "Система предсказания болезней виноградников";
 
     this.getVineData();
-    this.getMap();
+    //this.getMap();
   }
 
   setVineData = (data) => {
@@ -87,8 +89,7 @@ class App extends React.Component {
     axios.defaults.headers.get["Access-Control-Allow-Origin"] = "*";
 
     axios.get(server_ip + "vineyards").then((resp) => {
-      //alert(resp.data);
-      console.log(resp);
+
       if (resp.data) {
         self.setState({ circles: [...resp.data] });
       }
@@ -110,7 +111,7 @@ class App extends React.Component {
 
   getPolygonInfo = (item) => {
     var self = this;
-    alert(item.id);
+    
   };
 
   getPlaceInfo = (item) => {
@@ -148,45 +149,23 @@ class App extends React.Component {
   };
 
   delPlace = (id) => {
-    alert(id);
-    this.setState({ popupIsOpen: false, placeData: {} });
-  };
+    let isDel = window.confirm("Удалить место?");
+    if (isDel) {
+      this.setState({ popupIsOpen: false, placeData: {} });
 
-  setSuggest = (data, id) => {
-    this.setState({
-      circles: [...data.points],
-      filterStr: JSON.stringify(data.filters),
-      yard_id: id,
-      loading: false,
-    });
-  };
+      axios.defaults.headers.delete["Content-Type"] =
+        "application/json;charset=utf-8";
+      axios.defaults.headers.delete["Access-Control-Allow-Origin"] = "*";
 
-  closeFilter = (val) => {
-    this.setState({ filtersShow: false });
+      let self = this;
 
-    if (val) {
-      this.setState({ filtersData: val });
-      this.setFilters(val);
+      axios.delete(server_ip + "vineyards/" + id).then(
+        (resp) => {
+          self.getVineData();
+        },
+        (err) => alert("Не удалось удалить место")
+      );
     }
-  };
-
-  setFilters = (val) => {
-    let self = this;
-
-    axios.defaults.headers.post["Content-Type"] =
-      "application/json;charset=utf-8";
-    axios.defaults.headers.post["Access-Control-Allow-Origin"] = "*";
-
-    this.setState({ filterStr: "", loading: true });
-
-    axios.post(server_ip + "suggest", val).then(
-      (resp) => {
-        self.setSuggest(resp.data, 0);
-      },
-      (err) => {
-        self.setState({ circles: [], loading: false, filterStr: "" });
-      }
-    );
   };
 
   setCenter = (ref) => {
@@ -228,6 +207,14 @@ class App extends React.Component {
     this.addPlace(name, coordinates[1], coordinates[0]);
   };
 
+  closeSettings = (data) => {
+    this.setState({ settingsIsOpen: false });
+
+    if (!data) return;
+
+    this.setState({ settignsData: { ...data } });
+  };
+
   //  <SearchControl/>
 
   render() {
@@ -244,6 +231,8 @@ class App extends React.Component {
       popupIsOpen,
       showPolygons,
       placeData,
+      settingsIsOpen,
+      settignsData,
     } = this.state;
 
     let self = this;
@@ -269,6 +258,22 @@ class App extends React.Component {
               height: "96vh",
             }}
           >
+            {showPolygons &&
+              geodata.length > 0 &&
+              geodata.map((item, index) => (
+                <Polygon
+                  key={index}
+                  geometry={item.geometry}
+                  options={{
+                    fillColor: item.id == yard_id ? "#FFFF00" : "#00FF00",
+                    strokeColor: "#013210",
+                    opacity: 0.5,
+                    strokeWidth: 2,
+                    strokeStyle: "shortdash",
+                  }}
+                />
+              ))}
+
             {circles.map((item, index) => (
               <Placemark
                 key={index}
@@ -281,29 +286,19 @@ class App extends React.Component {
               />
             ))}
 
-            {showPolygons &&
-              geodata.length > 0 &&
-              geodata.map((item, index) => (
-                <Polygon
-                  key={index}
-                  geometry={item.geometry}
-                  onClick={() => self.getPolygonInfo(item)}
-                  options={{
-                    fillColor: item.id == yard_id ? "#FFFF00" : "#00FF00",
-                    strokeColor: "#013210",
-                    opacity: 0.5,
-                    strokeWidth: 2,
-                    strokeStyle: "shortdash",
-                  }}
-                />
-              ))}
-
             <Button
               options={{ maxWidth: 150 }}
               data={{
                 content: showPolygons ? "Cкрыть полигоны" : "Показать полигоны",
               }}
               onClick={this.togglePolygons}
+            />
+            <Button
+              options={{ maxWidth: 150 }}
+              data={{
+                content: "Настройки",
+              }}
+              onClick={() => this.setState({ settingsIsOpen: true })}
             />
             <ZoomControl />
           </Map>
@@ -336,6 +331,12 @@ class App extends React.Component {
             onClose={() => this.setState({ popupIsOpen: false, placeData: {} })}
             data={placeData}
             delPlace={this.delPlace}
+          />
+        )}
+        {settingsIsOpen && (
+          <SettingsDialog
+            onClose={self.closeSettings}
+            settingsData={settignsData}
           />
         )}
       </div>
