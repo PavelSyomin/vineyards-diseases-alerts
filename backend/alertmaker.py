@@ -78,7 +78,7 @@ class Alertmaker:
         }
 
     def _get_weather(self, point: Point, date: Optional[str] = None, back: int = 2, forward: int = 7):
-        if date is None:
+        if date is None or date == "":
             # Get for today
             data = self._get_forecast_data(point, back, forward)
         else:
