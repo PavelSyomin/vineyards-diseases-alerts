@@ -6,9 +6,9 @@
 
 Сделано командой The Mappers на AgroCode Hack 2023.
 
-[Демо]()
+[Демо](http://149.154.65.130/) (если не открывается, значит, уже выключили)
 
-[Презентация]()
+[Презентация](https://docs.google.com/presentation/d/e/2PACX-1vSf3BNkdA2AjuiG5TYl_xoQO6IXMgBdGIYv0t8SsI6gEPGvhrWHRblImamyMLwsnUO135MC5ANKaq2o/embed?start=false&loop=true&delayms=60000)
 
 ## Стек
 
@@ -18,7 +18,7 @@
 
 ## Источник метеоданных
 
-[Open Meteo](https://open-meteo.com/).
+[Open Meteo](https://open-meteo.com/)
 
 ## Как запустить у себя
 
