@@ -185,5 +185,5 @@ def get_map(date: str = None, back: int = 2, forward: int = 7, threshold: int = 
         }
         for contour in contours
     ]
-    print(contours)
+
     return contours
