@@ -6,7 +6,9 @@ import {
   Placemark,
   Polygon,
   YMaps,
-  ZoomControl
+  ZoomControl,
+  ListBox,
+  ListBoxItem,
 } from "react-yandex-maps";
 import DataPopup from "./dataPopup";
 import SettingsDialog from "./settingsDialog";
@@ -35,8 +37,24 @@ class App extends React.Component {
       p_index: 0,
       yard_id: -1,
       settignsData: {
-        before: { value: 2, title: "Сколько дней в прошлое" },
-        after: { value: 2, title: "Сколько дней в будущее" },
+        forward: {
+          value: 7,
+          title: "Период прогнозирования   ",
+          min: 3,
+          max: 14,
+        },
+        back: {
+          value: 2,
+          title: "Учитывать предыдущие дни",
+          min: 0,
+          max: 3,
+        },
+        threshold: {
+          value: 3,
+          title: "Порог предупреждения об угрозе",
+          min: 2,
+          max: 7,
+        },
       },
       selectedDate: "2021-07-31",
       popupIsOpen: false,
@@ -50,7 +68,7 @@ class App extends React.Component {
   componentDidMount() {
     document.title = "Система предсказания болезней виноградников";
 
-    this.getVineData();
+    this.getVineData(this.state.selectedDate);
     //this.getMap();
   }
 
@@ -81,19 +99,29 @@ class App extends React.Component {
     });
   };
 
-  getVineData = () => {
+  getVineData = (selectedDate) => {
     var self = this;
+
+    const { settignsData } = this.state;
 
     axios.defaults.headers.get["Content-Type"] =
       "application/json;charset=utf-8";
     axios.defaults.headers.get["Access-Control-Allow-Origin"] = "*";
 
-    axios.get(server_ip + "vineyards").then((resp) => {
+    let params =
+      "?with_alerts=1&date=" +
+      selectedDate +
+      "&back=" +
+      settignsData.back.value +
+      "&forward=" +
+      settignsData.forward.value +
+      "&threshold=" +
+      settignsData.threshold.value;
 
+    axios.get(server_ip + "vineyards" + params).then((resp) => {
       if (resp.data) {
         self.setState({ circles: [...resp.data] });
       }
-      //self.setVineData(resp.data);
     });
   };
 
@@ -105,47 +133,12 @@ class App extends React.Component {
     let self = this;
 
     axios.post(server_ip + "vineyards", { name, lat, lon }).then((resp) => {
-      self.getVineData();
+      self.getVineData(this.state.selectedDate);
     });
   };
 
   getPolygonInfo = (item) => {
     var self = this;
-    
-  };
-
-  getPlaceInfo = (item) => {
-    var self = this;
-
-    axios.defaults.headers.get["Content-Type"] =
-      "application/json;charset=utf-8";
-    axios.defaults.headers.get["Access-Control-Allow-Origin"] = "*";
-
-    axios
-      .get(
-        server_ip +
-          "vineyards/" +
-          item.id +
-          "/alerts?date=" +
-          this.state.selectedDate
-      )
-      .then(
-        (resp) => {
-          console.log(resp.data);
-          if (resp.data) {
-            self.setState({
-              placeData: {
-                ...resp.data,
-                name: item.name,
-                lat: item.lat,
-                lon: item.lon,
-                id: item.id,
-              },
-            });
-          }
-        },
-        (err) => {}
-      );
   };
 
   delPlace = (id) => {
@@ -161,7 +154,7 @@ class App extends React.Component {
 
       axios.delete(server_ip + "vineyards/" + id).then(
         (resp) => {
-          self.getVineData();
+          self.getVineData(this.state.selectedDate);
         },
         (err) => alert("Не удалось удалить место")
       );
@@ -193,8 +186,8 @@ class App extends React.Component {
   };
 
   selectMarker = (item, index) => {
-    this.setState({ popupIsOpen: true, popupId: item.id });
-    this.getPlaceInfo(item);
+    this.setState({ popupIsOpen: true, popupId: item.id, placeData: {...item} });
+    
   };
 
   addMarker = (event) => {
@@ -213,6 +206,11 @@ class App extends React.Component {
     if (!data) return;
 
     this.setState({ settignsData: { ...data } });
+  };
+
+  changeDate = (e) => {
+    this.setState({ selectedDate: e.target.value });
+    this.getVineData(e.target.value);
   };
 
   //  <SearchControl/>
@@ -236,7 +234,7 @@ class App extends React.Component {
     } = this.state;
 
     let self = this;
-    console.log(selectedDate);
+    console.log(circles); 
 
     return (
       <div className="App">
@@ -283,6 +281,9 @@ class App extends React.Component {
                   hintContent: item.name,
                   iconCaption: item.name,
                 }}
+                options={{
+                  iconColor: item.alerts_data.alerts.color ?? "#33aa33",
+                }}
               />
             ))}
 
@@ -300,15 +301,25 @@ class App extends React.Component {
               }}
               onClick={() => this.setState({ settingsIsOpen: true })}
             />
+            <ListBox data={{ content: "Список мест" }}>
+              {circles.map((item) => (
+                <ListBoxItem
+                  data={{
+                    content: item.name,
+                  }}
+                  
+                  options={{ selectOnClick: true }}
+                  onClick={() => {
+                    this.mapRef.setCenter([item.lon, item.lat], 10);
+                  }}
+                />
+              ))}
+            </ListBox>
             <ZoomControl />
           </Map>
         </YMaps>
         <div style={{ position: "absolute", right: 10, top: 10 }}>
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => this.setState({ selectedDate: e.target.value })}
-          />
+          <input type="date" value={selectedDate} onChange={self.changeDate} />
         </div>
         {loading && (
           <div

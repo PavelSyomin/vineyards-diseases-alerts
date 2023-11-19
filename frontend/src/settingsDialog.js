@@ -51,8 +51,6 @@ export default function SettingsDialog({ onClose, settingsData }) {
     setData(tmp_data);
   }, [settingsData]);
 
-  const descriptionElementRef = React.useRef(null);
-
   return (
     <Dialog
       open={true}
@@ -67,18 +65,21 @@ export default function SettingsDialog({ onClose, settingsData }) {
       <DialogContent dividers={scroll === "paper"}>
         {Object.keys(data).map(function (item, index) {
           return (
-            <div style={{marginBottom:5}}>
-              <span style={{minWidth:200}}>{data[item].title}</span>
-            <input
-              style={{marginLeft:10}}
-              type="text"
-              value={data[item].value}
-              onChange={(e) => {
-                let tmpData = { ...data };
-                tmpData[item].value = e.target.value;
-                setData(tmpData);
-              }}
-            />
+            <div style={{ marginBottom: 5, display: 'flex', flexDirection: 'row' }}>
+              <div style={{ minWidth: 240 }}>{data[item].title}</div>
+              <input
+                style={{ marginRight: 10, width:40 }}
+                type="number"
+                min={data[item].min}
+                max={data[item].max}
+                value={data[item].value}
+                onChange={(e) => {
+                  let tmpData = { ...data };
+                  tmpData[item].value = e.target.value;
+                  setData(tmpData);
+                }}
+              />
+              <div>min: {data[item].min}, max: {data[item].max}</div>
             </div>
           );
         })}

@@ -68,14 +68,14 @@ export default function DataPopup({ onClose, delPlace, data }) {
   const [labels, setLabels] = React.useState([]);
 
   React.useEffect(() => {
-    console.log(data);
+    
 
-    if (!data.weather) return;
+    if (!data.alerts_data || !data.alerts_data.weather) return;
 
     let dt = [];
     let t_data = [];
     let h_data = [];
-    const { weather } = data;
+    const { weather } = data.alerts_data;
 
     for (let i = 0; i < weather.length; i++) {
       let cur_date = weather[i].dt;
@@ -93,7 +93,7 @@ export default function DataPopup({ onClose, delPlace, data }) {
     onClose(null);
   };
 
-  console.log(data.alerts);
+  console.log(data.alerts_data);
 
   return (
     <Dialog
@@ -108,9 +108,11 @@ export default function DataPopup({ onClose, delPlace, data }) {
       <DialogTitle id="scroll-dialog-title">Данные по болезням</DialogTitle>
       <DialogContent dividers={scroll === "paper"}>
         <div>
-          {data.alerts &&
-            data.alerts.length > 0 &&
-            data.alerts.map(function (item) {
+          {data.alerts_data &&
+            data.alerts_data.alerts &&
+            data.alerts_data.alerts.diseases &&
+            data.alerts_data.alerts.diseases.length > 0 &&
+            data.alerts_data.alerts.diseases.map(function (item) {
               return (
                 <div
                   style={{
@@ -133,7 +135,11 @@ export default function DataPopup({ onClose, delPlace, data }) {
                 </div>
               );
             })}
-            {!data.alerts || data.alerts.length==0 && <div style={{fontSize:20}}>Нет болезней</div>}
+          {!data.alerts_data.alerts ||
+          !data.alerts_data.alerts.diseases ||
+            (data.alerts_data.alerts.diseases.length == 0 && (
+              <div style={{ fontSize: 20 }}>Нет болезней</div>
+            ))}
         </div>
 
         {labels.length > 0 && (
@@ -154,7 +160,13 @@ export default function DataPopup({ onClose, delPlace, data }) {
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={() =>{ delPlace(data.id);}}>Удалить место</Button>
+        <Button
+          onClick={() => {
+            delPlace(data.id);
+          }}
+        >
+          Удалить место
+        </Button>
         <Button onClick={() => handleClose()}>Закрыть</Button>
       </DialogActions>
     </Dialog>
