@@ -61,7 +61,7 @@ const ChartData = ({ labels, title, color, values }) => {
   );
 };
 
-export default function DataPopup({ onClose, delPlace, data }) {
+export default function DataPopup({ onClose, delPlace, data, isPlace }) {
   const [scroll, setScroll] = React.useState("paper");
   const [temper, setTemper] = React.useState([]);
   const [humid, setHumid] = React.useState([]);
@@ -108,6 +108,7 @@ export default function DataPopup({ onClose, delPlace, data }) {
       <DialogTitle id="scroll-dialog-title">Данные по болезням</DialogTitle>
       <DialogContent dividers={scroll === "paper"}>
         <div>
+          {data.name && <div style={{fontSize:24,marginBottom:10}}>{data.name}</div>}
           {data.alerts_data &&
             data.alerts_data.alerts &&
             data.alerts_data.alerts.diseases &&
@@ -160,13 +161,13 @@ export default function DataPopup({ onClose, delPlace, data }) {
         )}
       </DialogContent>
       <DialogActions>
-        <Button
+        {isPlace && <Button
           onClick={() => {
             delPlace(data.id);
           }}
         >
           Удалить место
-        </Button>
+        </Button>}
         <Button onClick={() => handleClose()}>Закрыть</Button>
       </DialogActions>
     </Dialog>

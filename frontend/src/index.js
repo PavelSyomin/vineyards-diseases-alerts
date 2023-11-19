@@ -61,6 +61,7 @@ class App extends React.Component {
       settingsIsOpen: false,
       loading: false,
       placeData: {},
+      isPlace: true,
       showPolygons: false,
     };
   }
@@ -69,7 +70,7 @@ class App extends React.Component {
     document.title = "Система предсказания болезней виноградников";
 
     this.getVineData(this.state.selectedDate);
-    //this.getMap();
+    this.getMap(this.state.selectedDate);
   }
 
   setVineData = (data) => {
@@ -87,14 +88,26 @@ class App extends React.Component {
     this.setState({ geodata: geo_array });
   };
 
-  getMap = () => {
+  getMap = (selectedDate) => {
     var self = this;
+
+    const { settignsData } = this.state;
 
     axios.defaults.headers.get["Content-Type"] =
       "application/json;charset=utf-8";
     axios.defaults.headers.get["Access-Control-Allow-Origin"] = "*";
 
-    axios.get(server_ip + "map").then((resp) => {
+    let params =
+      "?with_alerts=1&date=" +
+      selectedDate +
+      "&back=" +
+      settignsData.back.value +
+      "&forward=" +
+      settignsData.forward.value +
+      "&threshold=" +
+      settignsData.threshold.value;
+
+    axios.get(server_ip + "map" + params).then((resp) => {
       self.setState({ geodata: [...resp.data] });
     });
   };
@@ -138,7 +151,16 @@ class App extends React.Component {
   };
 
   getPolygonInfo = (item) => {
+
+    console.log(item);
+
     var self = this;
+    this.setState({
+      popupIsOpen: true,
+      popupId: item.id,
+      placeData: { ...item },
+      isPlace: false,
+    });
   };
 
   delPlace = (id) => {
@@ -186,8 +208,12 @@ class App extends React.Component {
   };
 
   selectMarker = (item, index) => {
-    this.setState({ popupIsOpen: true, popupId: item.id, placeData: {...item} });
-    
+    this.setState({
+      popupIsOpen: true,
+      popupId: item.id,
+      placeData: { ...item },
+      isPlace: true,
+    });
   };
 
   addMarker = (event) => {
@@ -211,9 +237,12 @@ class App extends React.Component {
   changeDate = (e) => {
     this.setState({ selectedDate: e.target.value });
     this.getVineData(e.target.value);
+    this.getMap(e.target.value);
   };
 
   //  <SearchControl/>
+
+  
 
   render() {
     const {
@@ -231,20 +260,11 @@ class App extends React.Component {
       placeData,
       settingsIsOpen,
       settignsData,
+      isPlace,
     } = this.state;
 
     let self = this;
-    console.log(circles); 
-
-    /*
-       <Button
-              options={{ maxWidth: 150 }}
-              data={{
-                content: showPolygons ? "Cкрыть полигоны" : "Показать полигоны",
-              }}
-              onClick={this.togglePolygons}
-            />
-            */
+    console.log(geodata);
 
     return (
       <div className="App">
@@ -272,8 +292,9 @@ class App extends React.Component {
                 <Polygon
                   key={index}
                   geometry={item.geometry}
+                  onClick={() => self.getPolygonInfo(item)}
                   options={{
-                    fillColor: item.id == yard_id ? "#FFFF00" : "#00FF00",
+                    fillColor: (item.alerts_data  && item.alerts_data.alerts && item.alerts_data.alerts.color) ?? "#22ee22",
                     strokeColor: "#013210",
                     opacity: 0.5,
                     strokeWidth: 2,
@@ -284,7 +305,7 @@ class App extends React.Component {
 
             {circles.map((item, index) => (
               <Placemark
-                key={index}
+                key={index+"_circle"}
                 geometry={[item.lon, item.lat]}
                 onClick={() => self.selectMarker(item, index)}
                 properties={{
@@ -297,7 +318,14 @@ class App extends React.Component {
               />
             ))}
 
-         
+            <Button
+              options={{ maxWidth: 150 }}
+              data={{
+                content: showPolygons ? "Cкрыть полигоны" : "Показать полигоны",
+              }}
+              onClick={this.togglePolygons}
+            />
+
             <Button
               options={{ maxWidth: 150 }}
               data={{
@@ -311,7 +339,6 @@ class App extends React.Component {
                   data={{
                     content: item.name,
                   }}
-                  
                   options={{ selectOnClick: true }}
                   onClick={() => {
                     this.mapRef.setCenter([item.lon, item.lat], 10);
@@ -346,6 +373,7 @@ class App extends React.Component {
             onClose={() => this.setState({ popupIsOpen: false, placeData: {} })}
             data={placeData}
             delPlace={this.delPlace}
+            isPlace={isPlace}
           />
         )}
         {settingsIsOpen && (
